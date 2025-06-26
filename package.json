@@ -1,0 +1,25 @@
+{
+  "name": "chart-data-grouper",
+  "version": "1.0.1",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/minhajsordar/react-resizable-rotatable-draggable-radiusable.git"
+  },
+  "bugs": {
+    "url": "https://github.com/minhajsordar/react-resizable-rotatable-draggable-radiusable/issues"
+  },
+  "homepage": "https://github.com/minhajsordar/react-resizable-rotatable-draggable-radiusable#readme",
+  "scripts": {
+    "build": "tsc"
+  },
+  "files": ["dist"],
+  "description": "A utility to group, sum, average and transform data into Chart.js format with nested and date support.",
+  "keywords": ["chartjs", "group", "aggregate", "sum", "count", "average", "data", "visualization"],
+  "author": "minhajsordar",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

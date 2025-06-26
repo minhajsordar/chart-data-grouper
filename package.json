@@ -5,12 +5,12 @@
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/minhajsordar/react-resizable-rotatable-draggable-radiusable.git"
+    "url": "git+https://github.com/minhajsordar/chart-data-grouper.git"
   },
   "bugs": {
-    "url": "https://github.com/minhajsordar/react-resizable-rotatable-draggable-radiusable/issues"
+    "url": "https://github.com/minhajsordar/chart-data-grouper/issues"
   },
-  "homepage": "https://github.com/minhajsordar/react-resizable-rotatable-draggable-radiusable#readme",
+  "homepage": "https://github.com/minhajsordar/chart-data-grouper#readme",
   "scripts": {
     "build": "tsc"
   },

@@ -2,6 +2,19 @@ import { DateGroupingOptions, TimeGrouping } from './commonTypes';
 import getValueByPath from './getValueByPath';
 import formatDate, { isValidFormat } from './formatDate';
 
+function getWeekStartDate(date: Date): Date {
+  // Clone the date to avoid modifying original
+  const d = new Date(date);
+  // Get day of week (0 = Sunday, 6 = Saturday)
+  const day = d.getDay();
+  // Calculate difference to previous Sunday
+  const diff = d.getDate() - day;
+  // Set to start of week (Sunday)
+  d.setDate(diff);
+  // Set to start of day
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
 function generateDateIntervals(
   start: Date,
   end: Date,
@@ -38,9 +51,12 @@ function generateDateIntervals(
           groupKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
           break;
         case 'weeks':
-          const weekStart = new Date(date);
-          weekStart.setDate(day - date.getDay());
-          groupKey = `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`;
+          const weekStart = getWeekStartDate(date);
+          if (timeGrouping && isValidFormat(timeGrouping)) {
+            groupKey = formatDate(weekStart, timeGrouping);
+          } else {
+            groupKey = `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`;
+          }
           break;
         case 'months':
           groupKey = `${year}-${String(month + 1).padStart(2, '0')}`;
@@ -178,9 +194,12 @@ export default function groupByDate<T extends object>(rawData: T[], options: Dat
           groupKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
           break;
         case 'weeks':
-          const weekStart = new Date(date);
-          weekStart.setDate(day - date.getDay());
-          groupKey = `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`;
+          const weekStart = getWeekStartDate(date);
+          if (timeGrouping && isValidFormat(timeGrouping)) {
+            groupKey = formatDate(weekStart, timeGrouping);
+          } else {
+            groupKey = `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`;
+          }
           break;
         case 'months':
           groupKey = `${year}-${String(month + 1).padStart(2, '0')}`;
@@ -254,8 +273,55 @@ export default function groupByDate<T extends object>(rawData: T[], options: Dat
             : key // Year-month-day
         : key)
     }));
+  function parseFormattedDate(dateStr: string, format: string): Date {
+    let year = 0, month = 0, day = 1, hours = 0, minutes = 0, seconds = 0, ms = 0;
+
+    // Helper to extract value by token
+    const extract = (token: string): string => {
+      const pos = format.indexOf(token);
+      return pos >= 0 ? dateStr.slice(pos, pos + token.length) : '';
+    };
+
+    // Extract components
+    const yyyy = extract('YYYY');
+    const mmmm = extract('MMMM');
+    const mmm = extract('MMM');
+    const mm = extract('MM');
+    const dd = extract('DD');
+    const hh = extract('HH');
+    const mi = extract('mm');
+    const ss = extract('ss');
+    const sss = extract('SSS');
+
+    // Set year if exists
+    if (yyyy) year = parseInt(yyyy, 10);
+
+    // Set month (prioritize longer tokens)
+    if (mmmm) {
+      month = new Date(`${mmmm} 1, 2000`).getMonth();
+    } else if (mmm) {
+      month = new Date(`${mmm} 1, 2000`).getMonth();
+    } else if (mm) {
+      month = parseInt(mm, 10) - 1;
+    }
+
+    // Set other components
+    if (dd) day = parseInt(dd, 10);
+    if (hh) hours = parseInt(hh, 10);
+    if (mi) minutes = parseInt(mi, 10);
+    if (ss) seconds = parseInt(ss, 10);
+    if (sss) ms = parseInt(sss, 10);
+
+    return new Date(year, month, day, hours, minutes, seconds, ms);
+  }
+
 
   result = result.sort((a, b) => {
+    if (isValidFormat(timeGrouping)) {
+      const dateA = parseFormattedDate(a.date, timeGrouping);
+      const dateB = parseFormattedDate(b.date, timeGrouping);
+      return dateA.getTime() - dateB.getTime();
+    }
     const dateA = intervalsWithDates.find(i => i.key === a.date)?.date;
     const dateB = intervalsWithDates.find(i => i.key === b.date)?.date;
     return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);

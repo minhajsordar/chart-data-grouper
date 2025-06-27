@@ -1,4 +1,4 @@
-const VALID_TOKENS = ['YYYY', 'MMMM', 'MMM', 'MM', 'DD', 'HH', 'mm', 'ss', 'SSS', 'W', 'WW'];
+export const VALID_TOKENS = ['YYYY', 'MMMM', 'MMM', 'MM', 'DD', 'HH', 'mm', 'ss', 'SSS', 'W', 'WW'];
 
 export function isValidFormat(format: string): boolean {
   return format.split(/[^A-Za-z]+/).every(token =>

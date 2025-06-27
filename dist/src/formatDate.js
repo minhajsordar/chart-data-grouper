@@ -1,10 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.VALID_TOKENS = void 0;
 exports.isValidFormat = isValidFormat;
 exports.default = formatDate;
-const VALID_TOKENS = ['YYYY', 'MMMM', 'MMM', 'MM', 'DD', 'HH', 'mm', 'ss', 'SSS', 'W', 'WW'];
+exports.VALID_TOKENS = ['YYYY', 'MMMM', 'MMM', 'MM', 'DD', 'HH', 'mm', 'ss', 'SSS', 'W', 'WW'];
 function isValidFormat(format) {
-    return format.split(/[^A-Za-z]+/).every(token => token === '' || VALID_TOKENS.includes(token));
+    return format.split(/[^A-Za-z]+/).every(token => token === '' || exports.VALID_TOKENS.includes(token));
 }
 function formatDate(date, format) {
     const d = new Date(date);

@@ -14,14 +14,30 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
-    "watch": "tsc -w"
+    "watch": "tsc -w",
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "description": "A utility to group, sum, average and transform data into Chart.js format with nested and date support.",
-  "keywords": ["chartjs", "group", "aggregate", "sum", "count", "average", "data", "visualization"],
+  "keywords": [
+    "chartjs",
+    "group",
+    "aggregate",
+    "sum",
+    "count",
+    "average",
+    "data",
+    "visualization"
+  ],
   "author": "minhajsordar",
   "license": "MIT",
   "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.0.3",
+    "ts-jest": "^29.4.0",
     "typescript": "^5.4.0"
   }
 }

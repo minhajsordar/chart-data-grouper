@@ -1,6 +1,4 @@
-### Usage Example
-
-```
+import { groupByDate ,groupByProperty,generateHistogram} from './dist/index.js';
 
 const testCaseForSumAndAverage = [
     { month: 'January', desktop: 100, mobile: 50 },
@@ -55,6 +53,3 @@ const propertyGrouped = groupByProperty(testCaseForSumAndAverage, {
 console.log("dateGrouped", dateGrouped);
 console.log("histogramData", JSON.stringify(histogramData, null, 2));
 console.log("propertyGrouped", propertyGrouped);
-
-```
-

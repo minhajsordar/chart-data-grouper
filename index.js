@@ -71,7 +71,7 @@ const baseOptions = {
 };
 const options = {
     ...baseOptions,
-    timeGrouping: 'YYYY-MM-W',
+    timeGrouping: 'YYYY-MM-WW',
     emptyIntervalFill: 0,
     operation: 'sum',
 };

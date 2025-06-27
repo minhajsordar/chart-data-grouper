@@ -16,7 +16,14 @@
     "clean": "rm -rf dist",
     "watch": "tsc -w",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "npm test",
+      "npm run build"
+    ]
   },
   "files": [
     "dist"
@@ -36,7 +43,9 @@
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^30.0.0",
+    "husky": "^9.1.7",
     "jest": "^30.0.3",
+    "lint-staged": "^16.1.2",
     "ts-jest": "^29.4.0",
     "typescript": "^5.4.0"
   }

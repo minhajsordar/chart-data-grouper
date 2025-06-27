@@ -32,8 +32,7 @@ const result = groupByDate(data, {
   dateField: 'createdAt',       // Path to date field (supports nesting)
   valueFields: ['value'],       // Fields to aggregate
   operation: 'sum',            // 'sum' | 'average' | 'max' | 'min' | 'count'
-  timeGrouping: 'daily',       // 'second' | 'minute' | 'hour' | 'daily' | 'weekly' | 'monthly' | 'yearly'
-  monthFormat: 'short'         // 'short' (Jan) | 'long' (January) | 'numeric' (1)
+  timeGrouping: 'days',       // 'milliseconds' | 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months' | 'years' | 'YYYY-MM-DD-HH:mm:ss:SSS'
 });
 ```
 
@@ -116,7 +115,7 @@ const dateGrouped = groupByDate(testCaseForCountSumAndAverageByMinutesHourlyDail
     dateField: 'createdAt',
     valueFields: ['desktop', 'mobile'],
     operation: 'sum',
-    timeGrouping: 'minute',
+    timeGrouping: 'minutes',
     monthFormat: 'long'
 });
 
@@ -149,7 +148,7 @@ const dailySales = groupByDate(salesData, {
   dateField: 'transactionDate',
   valueFields: ['amount'],
   operation: 'sum',
-  timeGrouping: 'daily'
+  timeGrouping: 'days'
 });
 ```
 

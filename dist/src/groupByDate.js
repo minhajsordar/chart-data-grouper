@@ -2,53 +2,174 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = groupByDate;
 const getValueByPath_1 = require("./getValueByPath");
-function groupByDate(data, options) {
-    const { dateField, valueFields, operation = 'sum', timeGrouping = 'monthly', monthFormat = 'short' } = options;
-    const monthNames = {
-        short: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-        long: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-    };
+const formatDate_1 = require("./formatDate");
+function generateDateIntervals(start, end, timeGrouping) {
+    const intervals = [];
+    const current = new Date(start);
+    while (current <= end) {
+        const date = new Date(current);
+        let groupKey;
+        if (timeGrouping && (0, formatDate_1.isValidFormat)(timeGrouping)) {
+            groupKey = (0, formatDate_1.default)(date, timeGrouping);
+        }
+        else {
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            const day = date.getDate();
+            switch (timeGrouping) {
+                case 'milliseconds':
+                    groupKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}:${String(date.getMilliseconds()).padStart(3, '0')}`;
+                    break;
+                case 'seconds':
+                    groupKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+                    break;
+                case 'minutes':
+                    groupKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+                    break;
+                case 'hours':
+                    groupKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}`;
+                    break;
+                case 'days':
+                    groupKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    break;
+                case 'weeks':
+                    const weekStart = new Date(date);
+                    weekStart.setDate(day - date.getDay());
+                    groupKey = `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`;
+                    break;
+                case 'months':
+                    groupKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+                    break;
+                case 'years':
+                    groupKey = `${year}`;
+                    break;
+                default:
+                    groupKey = date.toISOString().split('T')[0];
+            }
+        }
+        intervals.push({ key: groupKey, date });
+        if (timeGrouping.includes('SSS') || timeGrouping === 'milliseconds') {
+            current.setMilliseconds(current.getMilliseconds() + 1);
+        }
+        else if (timeGrouping.includes('ss') || timeGrouping === 'seconds') {
+            current.setSeconds(current.getSeconds() + 1);
+        }
+        else if (timeGrouping.includes('mm') || timeGrouping === 'minutes') {
+            current.setMinutes(current.getMinutes() + 1);
+        }
+        else if (timeGrouping.includes('HH') || timeGrouping === 'hours') {
+            current.setHours(current.getHours() + 1);
+        }
+        else if (timeGrouping.includes('DD') || timeGrouping === 'days') {
+            current.setDate(current.getDate() + 1);
+        }
+        else if (timeGrouping.includes('W') || timeGrouping === 'weeks') {
+            current.setDate(current.getDate() + 7);
+        }
+        else if (timeGrouping.includes('MM') || timeGrouping === 'months') {
+            current.setMonth(current.getMonth() + 1);
+        }
+        else if (timeGrouping.includes('YYYY') || timeGrouping === 'years') {
+            current.setFullYear(current.getFullYear() + 1);
+        }
+        else {
+            current.setDate(current.getDate() + 1); // Default to daily increment for custom formats
+        }
+    }
+    return intervals;
+}
+function groupByDate(rawData, options) {
+    const { dateField, valueFields, operation = 'sum', timeGrouping = 'months', emptyIntervalFill, startDate: startDateOption, endDate: endDateOption, } = options;
     const grouped = {};
+    // Determine date range
+    let minDate = null;
+    let maxDate = null;
+    let data = rawData;
+    const startDateProvided = startDateOption !== undefined;
+    const endDateProvided = endDateOption !== undefined;
+    if (startDateProvided || endDateProvided) {
+        data = rawData.filter(item => {
+            const dateValue = (0, getValueByPath_1.default)(item, dateField);
+            const date = typeof dateValue === 'string' || dateValue instanceof Date ? new Date(dateValue) : null;
+            return date && (!startDateProvided || date >= new Date(startDateOption)) && (!endDateProvided || date <= new Date(endDateOption));
+        });
+    }
+    // Find min and max dates from data if not provided
+    data.forEach(item => {
+        const dateValue = (0, getValueByPath_1.default)(item, dateField);
+        const date = typeof dateValue === 'string' || dateValue instanceof Date ? new Date(dateValue) : null;
+        if (!date || isNaN(date.getTime()))
+            return;
+        if (!minDate || date < minDate)
+            minDate = new Date(date);
+        if (!maxDate || date > maxDate)
+            maxDate = new Date(date);
+    });
+    // Use provided dates if available
+    const startDate = startDateOption ? new Date(startDateOption) : minDate;
+    const endDate = endDateOption ? new Date(endDateOption) : maxDate;
+    if (!startDate || !endDate) {
+        return [];
+    }
+    // Generate all intervals if emptyIntervalFill is specified
+    const allIntervals = emptyIntervalFill !== undefined
+        ? generateDateIntervals(startDate, endDate, timeGrouping)
+        : [];
+    // Initialize empty intervals if needed
+    if (emptyIntervalFill !== undefined) {
+        allIntervals.forEach(({ key }) => {
+            if (!grouped[key]) {
+                grouped[key] = { date: key };
+                valueFields.forEach(field => {
+                    grouped[key][field] = [];
+                });
+            }
+        });
+    }
+    // Process data
     data.forEach(item => {
         const dateValue = (0, getValueByPath_1.default)(item, dateField);
         const date = typeof dateValue === 'string' || dateValue instanceof Date ? new Date(dateValue) : null;
         if (!date || isNaN(date.getTime()))
             return;
         let groupKey;
-        const year = date.getFullYear();
-        const month = date.getMonth();
-        const day = date.getDate();
-        switch (timeGrouping) {
-            case 'second':
-                groupKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
-                break;
-            case 'minute':
-                groupKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-                break;
-            case 'hour':
-                groupKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}`;
-                break;
-            case 'daily':
-                groupKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                break;
-            case 'weekly':
-                const weekStart = new Date(date);
-                weekStart.setDate(day - date.getDay());
-                groupKey = `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`;
-                break;
-            case 'monthly':
-                if (monthFormat === 'numeric') {
+        if (timeGrouping && (0, formatDate_1.isValidFormat)(timeGrouping)) {
+            groupKey = (0, formatDate_1.default)(date, timeGrouping);
+        }
+        else {
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            const day = date.getDate();
+            switch (timeGrouping) {
+                case 'milliseconds':
+                    groupKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}:${String(date.getMilliseconds()).padStart(3, '0')}`;
+                    break;
+                case 'seconds':
+                    groupKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+                    break;
+                case 'minutes':
+                    groupKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+                    break;
+                case 'hours':
+                    groupKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(date.getHours()).padStart(2, '0')}`;
+                    break;
+                case 'days':
+                    groupKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    break;
+                case 'weeks':
+                    const weekStart = new Date(date);
+                    weekStart.setDate(day - date.getDay());
+                    groupKey = `${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`;
+                    break;
+                case 'months':
                     groupKey = `${year}-${String(month + 1).padStart(2, '0')}`;
-                }
-                else {
-                    groupKey = `${year}-${monthNames[monthFormat][month]}`;
-                }
-                break;
-            case 'yearly':
-                groupKey = `${year}`;
-                break;
-            default:
-                groupKey = date.toISOString().split('T')[0];
+                    break;
+                case 'years':
+                    groupKey = `${year}`;
+                    break;
+                default:
+                    groupKey = date.toISOString().split('T')[0];
+            }
         }
         if (!grouped[groupKey]) {
             grouped[groupKey] = { date: groupKey };
@@ -63,7 +184,8 @@ function groupByDate(data, options) {
             }
         });
     });
-    const result = Object.values(grouped).map(group => {
+    // Calculate aggregated values
+    let result = Object.values(grouped).map(group => {
         const output = { date: group.date };
         valueFields.forEach(field => {
             const values = group[field].filter((v) => !isNaN(v));
@@ -93,5 +215,47 @@ function groupByDate(data, options) {
         });
         return output;
     });
-    return result.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    // Sort by date
+    const intervalsWithDates = emptyIntervalFill !== undefined
+        ? allIntervals
+        : Object.keys(grouped).map(key => ({
+            key,
+            date: new Date(key.includes('T') ? key : key.includes('-')
+                ? key.length === 4
+                    ? `${key}-01-01` // Year only
+                    : key.length === 7
+                        ? `${key}-01` // Year-month
+                        : key // Year-month-day
+                : key)
+        }));
+    result = result.sort((a, b) => {
+        const dateA = intervalsWithDates.find(i => i.key === a.date)?.date;
+        const dateB = intervalsWithDates.find(i => i.key === b.date)?.date;
+        return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
+    });
+    // Handle empty interval filling
+    if (emptyIntervalFill !== undefined) {
+        let previousValues = {};
+        valueFields.forEach(field => {
+            previousValues[field] = 0;
+        });
+        result = result.map(item => {
+            const output = { date: item.date };
+            valueFields.forEach(field => {
+                if (item[field] !== null) {
+                    output[field] = item[field];
+                    previousValues[field] = item[field];
+                }
+                else {
+                    output[field] = emptyIntervalFill === 0
+                        ? 0
+                        : previousValues[field] !== undefined
+                            ? previousValues[field]
+                            : 0;
+                }
+            });
+            return output;
+        });
+    }
+    return result;
 }

@@ -1,6 +1,6 @@
 {
   "name": "chart-data-grouper",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "repository": {
@@ -12,7 +12,9 @@
   },
   "homepage": "https://github.com/minhajsordar/chart-data-grouper#readme",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "watch": "tsc -w"
   },
   "files": ["dist"],
   "description": "A utility to group, sum, average and transform data into Chart.js format with nested and date support.",

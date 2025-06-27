@@ -32,8 +32,7 @@ const result = groupByDate(data, {
   dateField: 'createdAt',       // Path to date field (supports nesting)
   valueFields: ['value'],       // Fields to aggregate
   operation: 'sum',            // 'sum' | 'average' | 'max' | 'min' | 'count'
-  timeGrouping: 'daily',       // 'seconds' | 'minutes' | 'hours' | 'daily' | 
-                              // 'weekly' | 'monthly' | 'yearly'
+  timeGrouping: 'daily',       // 'second' | 'minute' | 'hour' | 'daily' | 'weekly' | 'monthly' | 'yearly'
   monthFormat: 'short'         // 'short' (Jan) | 'long' (January) | 'numeric' (1)
 });
 ```

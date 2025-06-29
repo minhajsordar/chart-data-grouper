@@ -113,7 +113,7 @@ export default function groupByDate<T extends object>(rawData: T[], options: Dat
   } = options;
 
   const grouped: Record<string, any> = {};
-
+  // grouped['count'] = [0];
   // Determine date range
   let minDate: Date | null = null;
   let maxDate: Date | null = null;
@@ -156,9 +156,13 @@ export default function groupByDate<T extends object>(rawData: T[], options: Dat
     allIntervals.forEach(({ key }) => {
       if (!grouped[key]) {
         grouped[key] = { date: key };
-        valueFields.forEach(field => {
-          grouped[key][field as string] = [];
-        });
+        if (operation === 'count') {
+          grouped[key]['count'] = 0;
+        } else {
+          valueFields.forEach(field => {
+            grouped[key][field as string] = [];
+          });
+        }
       }
     });
   }
@@ -214,29 +218,39 @@ export default function groupByDate<T extends object>(rawData: T[], options: Dat
 
     if (!grouped[groupKey]) {
       grouped[groupKey] = { date: groupKey };
+      if (operation === 'count') {
+        grouped[groupKey]['count'] = 0;
+      } else {
+        valueFields.forEach(field => {
+          grouped[groupKey][field as string] = [];
+        });
+      }
+    }
+    if (operation === 'count') {
+      grouped[groupKey]['count'] += 1;
+    } else {
       valueFields.forEach(field => {
-        grouped[groupKey][field as string] = [];
+        const value = getValueByPath(item, field as string);
+        if (value !== undefined && value !== null) {
+          grouped[groupKey][field as string].push(Number(value));
+        }
       });
     }
-
-    valueFields.forEach(field => {
-      const value = getValueByPath(item, field as string);
-      if (value !== undefined && value !== null) {
-        grouped[groupKey][field as string].push(Number(value));
-      }
-    });
   });
 
   // Calculate aggregated values
   let result = Object.values(grouped).map(group => {
     const output: Record<string, any> = { date: group.date };
+    if (operation === 'count') {
+      output['count'] = group['count'];
+      return output;
+    }
     valueFields.forEach(field => {
       const values = group[field as string].filter((v: number) => !isNaN(v));
       if (values.length === 0) {
         output[field as string] = null;
         return;
       }
-
       switch (operation) {
         case 'sum':
           output[field as string] = values.reduce((a: number, b: number) => a + b, 0);
@@ -249,9 +263,6 @@ export default function groupByDate<T extends object>(rawData: T[], options: Dat
           break;
         case 'min':
           output[field as string] = Math.min(...values);
-          break;
-        case 'count':
-          output[field as string] = values.length;
           break;
         default:
           output[field as string] = values.reduce((a: number, b: number) => a + b, 0);
@@ -330,24 +341,33 @@ export default function groupByDate<T extends object>(rawData: T[], options: Dat
   // Handle empty interval filling
   if (emptyIntervalFill !== undefined) {
     let previousValues: Record<string, any> = {};
-    valueFields.forEach(field => {
-      previousValues[field as string] = 0;
-    });
+    if (operation === 'count') {
+      previousValues['count'] = 0;
+    } else {
+      valueFields.forEach(field => {
+        previousValues[field as string] = 0;
+      });
+    }
 
     result = result.map(item => {
       const output: Record<string, any> = { date: item.date };
-      valueFields.forEach(field => {
-        if (item[field as string] !== null) {
-          output[field as string] = item[field as string];
-          previousValues[field as string] = item[field as string];
-        } else {
-          output[field as string] = emptyIntervalFill === 0
-            ? 0
-            : previousValues[field as string] !== undefined
-              ? previousValues[field as string]
-              : 0;
-        }
-      });
+      if (operation === 'count') {
+        output['count'] = item['count'];
+        previousValues['count'] = item['count'];
+      } else {
+        valueFields.forEach(field => {
+          if (item[field as string] !== null) {
+            output[field as string] = item[field as string];
+            previousValues[field as string] = item[field as string];
+          } else {
+            output[field as string] = emptyIntervalFill === 0
+              ? 0
+              : previousValues[field as string] !== undefined
+                ? previousValues[field as string]
+                : 0;
+          }
+        });
+      }
       return output;
     });
   }

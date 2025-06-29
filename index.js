@@ -30,7 +30,7 @@ const histogramTestCase = [
 const dateGrouped = groupByDate(testCaseForCountSumAndAverageByMinutesHourlyDailyMonthlyYearlyAndNone, {
     dateField: 'createdAt',
     valueFields: ['desktop', 'mobile'],
-    operation: 'sum',
+    operation: 'count',
     timeGrouping: 'days', // 'milliseconds' | 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months' | 'years' | 'YYYY-MM-DD-HH:mm:ss:SSS'
     emptyIntervalFill: 0,
     // startDate: '2025-06-22T12:00:00Z',
@@ -51,32 +51,77 @@ const dateGrouped = groupByDate(testCaseForCountSumAndAverageByMinutesHourlyDail
 //     sortBy: 'month',
 // });
 // Returns histogram data grouped by gender
-console.log("dateGrouped", dateGrouped);
-console.log("dateGrouped", dateGrouped.length);
-console.log("formatDate", formatDate(new Date(), 'YYYY-MMMM-DD-HH-mm-ss'));
+// console.log("dateGrouped", dateGrouped);
+// console.log("dateGrouped", dateGrouped.length);
+// console.log("formatDate", formatDate(new Date(), 'YYYY-MMMM-DD-HH-mm-ss'));
 // console.log("histogramData", JSON.stringify(histogramData, null, 2));
 // console.log("propertyGrouped", propertyGrouped);
 
+// const sampleData = [
+//     { id: 1, date: '2023-01-15T10:30:00', value: 10, visits: 5 },
+//     { id: 2, date: '2023-01-15T11:45:00', value: 20, visits: 3 },
+//     { id: 3, date: '2023-01-16T09:15:00', value: 15, visits: 7 },
+//     { id: 4, date: '2023-02-01T14:00:00', value: 30, visits: 2 },
+//     { id: 5, date: '2023-02-15T16:30:00', value: 25, visits: 4 },
+// ];
+
+// const baseOptions = {
+//     dateField: 'date',
+//     valueFields: ['visits'],
+// };
+// const options = {
+//     ...baseOptions,
+//     timeGrouping: 'YYYY-MM-DD',
+//     emptyIntervalFill: 0,
+//     operation: 'count',
+// };
+
+// const result = groupByDate(sampleData, options);
+
+// // Week starts on Sunday (2023-01-15 is Sunday)
+// console.log("result", result);
+
+// const sampleData = [
+//     { id: 1, brand: 'iphone', value: 10, visits: 5 },
+//     { id: 2, brand: 'iphone', value: 20, visits: 3 },
+//     { id: 3, brand: 'android', value: 15, visits: 7 },
+//     { id: 4, brand: 'android', value: 30, visits: 2 },
+//     { id: 5, brand: 'motorola', value: 25, visits: 4 },
+// ];
+
+// const baseOptions = {
+//     groupBy: 'brand',
+//     valueFields: ['value', 'visits'],
+// };
+
+// const options = {
+//     ...baseOptions,
+//     operation: 'sum',
+// };
+
+// const result = groupByProperty(sampleData, options);
+
+// console.log("result", result);
+
+
+
 const sampleData = [
-    { id: 1, date: '2023-01-15T10:30:00', value: 10, visits: 5 },
-    { id: 2, date: '2023-01-15T11:45:00', value: 20, visits: 3 },
-    { id: 3, date: '2023-01-16T09:15:00', value: 15, visits: 7 },
-    { id: 4, date: '2023-02-01T14:00:00', value: 30, visits: 2 },
-    { id: 5, date: '2023-02-15T16:30:00', value: 25, visits: 4 },
+    { name: 'muhammad', age: 10, visited: 5 },
+    { name: 'minhaj', age: 20, visited: 3 },
+    { name: 'rohan', age: 15, visited: 7 },
+    { name: 'ismael', age: 30, visited: 2 },
+    { name: 'david', age: 25, visited: 4 },
 ];
 
 const baseOptions = {
-    dateField: 'date',
-    valueFields: ['value', 'visits'],
+    valueField: 'age',
+    groupBy: 'name',
 };
+
 const options = {
     ...baseOptions,
-    timeGrouping: 'YYYY-MM-WW',
-    emptyIntervalFill: 0,
-    operation: 'sum',
+    bins: 5,
 };
 
-const result = groupByDate(sampleData, options);
-
-// Week starts on Sunday (2023-01-15 is Sunday)
-console.log("result", result);
+const result = generateHistogram(sampleData, options);
+console.log("result", JSON.stringify(result, null, 2));

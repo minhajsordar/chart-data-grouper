@@ -98,6 +98,7 @@ function generateDateIntervals(start, end, timeGrouping) {
 function groupByDate(rawData, options) {
     const { dateField, valueFields, operation = 'sum', timeGrouping = 'months', emptyIntervalFill, startDate: startDateOption, endDate: endDateOption, } = options;
     const grouped = {};
+    // grouped['count'] = [0];
     // Determine date range
     let minDate = null;
     let maxDate = null;
@@ -137,9 +138,14 @@ function groupByDate(rawData, options) {
         allIntervals.forEach(({ key }) => {
             if (!grouped[key]) {
                 grouped[key] = { date: key };
-                valueFields.forEach(field => {
-                    grouped[key][field] = [];
-                });
+                if (operation === 'count') {
+                    grouped[key]['count'] = 0;
+                }
+                else {
+                    valueFields.forEach(field => {
+                        grouped[key][field] = [];
+                    });
+                }
             }
         });
     }
@@ -194,20 +200,34 @@ function groupByDate(rawData, options) {
         }
         if (!grouped[groupKey]) {
             grouped[groupKey] = { date: groupKey };
+            if (operation === 'count') {
+                grouped[groupKey]['count'] = 0;
+            }
+            else {
+                valueFields.forEach(field => {
+                    grouped[groupKey][field] = [];
+                });
+            }
+        }
+        if (operation === 'count') {
+            grouped[groupKey]['count'] += 1;
+        }
+        else {
             valueFields.forEach(field => {
-                grouped[groupKey][field] = [];
+                const value = (0, getValueByPath_1.default)(item, field);
+                if (value !== undefined && value !== null) {
+                    grouped[groupKey][field].push(Number(value));
+                }
             });
         }
-        valueFields.forEach(field => {
-            const value = (0, getValueByPath_1.default)(item, field);
-            if (value !== undefined && value !== null) {
-                grouped[groupKey][field].push(Number(value));
-            }
-        });
     });
     // Calculate aggregated values
     let result = Object.values(grouped).map(group => {
         const output = { date: group.date };
+        if (operation === 'count') {
+            output['count'] = group['count'];
+            return output;
+        }
         valueFields.forEach(field => {
             const values = group[field].filter((v) => !isNaN(v));
             if (values.length === 0) {
@@ -226,9 +246,6 @@ function groupByDate(rawData, options) {
                     break;
                 case 'min':
                     output[field] = Math.min(...values);
-                    break;
-                case 'count':
-                    output[field] = values.length;
                     break;
                 default:
                     output[field] = values.reduce((a, b) => a + b, 0);
@@ -305,24 +322,35 @@ function groupByDate(rawData, options) {
     // Handle empty interval filling
     if (emptyIntervalFill !== undefined) {
         let previousValues = {};
-        valueFields.forEach(field => {
-            previousValues[field] = 0;
-        });
+        if (operation === 'count') {
+            previousValues['count'] = 0;
+        }
+        else {
+            valueFields.forEach(field => {
+                previousValues[field] = 0;
+            });
+        }
         result = result.map(item => {
             const output = { date: item.date };
-            valueFields.forEach(field => {
-                if (item[field] !== null) {
-                    output[field] = item[field];
-                    previousValues[field] = item[field];
-                }
-                else {
-                    output[field] = emptyIntervalFill === 0
-                        ? 0
-                        : previousValues[field] !== undefined
-                            ? previousValues[field]
-                            : 0;
-                }
-            });
+            if (operation === 'count') {
+                output['count'] = item['count'];
+                previousValues['count'] = item['count'];
+            }
+            else {
+                valueFields.forEach(field => {
+                    if (item[field] !== null) {
+                        output[field] = item[field];
+                        previousValues[field] = item[field];
+                    }
+                    else {
+                        output[field] = emptyIntervalFill === 0
+                            ? 0
+                            : previousValues[field] !== undefined
+                                ? previousValues[field]
+                                : 0;
+                    }
+                });
+            }
             return output;
         });
     }

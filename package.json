@@ -12,7 +12,7 @@
   },
   "homepage": "https://github.com/minhajsordar/chart-data-grouper#readme",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsc-alias",
     "clean": "rm -rf dist",
     "watch": "tsc -w",
     "test": "jest",
@@ -47,6 +47,7 @@
     "jest": "^30.0.3",
     "lint-staged": "^16.1.2",
     "ts-jest": "^29.4.0",
+    "tsc-alias": "^1.8.16",
     "typescript": "^5.4.0"
   }
 }

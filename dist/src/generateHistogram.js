@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = generateHistogram;
-const getValueByPath_1 = require("./getValueByPath");
+const getValueByPath_1 = __importDefault(require("./getValueByPath"));
 function generateHistogram(data, options) {
     const { valueField, groupBy, bins = 5, binType = 'equal', formatLabel = (min, max) => `${min}-${max}` } = options;
     const results = [];

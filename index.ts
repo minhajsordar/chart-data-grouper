@@ -1,7 +1,7 @@
-import generateHistogram from './src/generateHistogram';
-import groupByDate from './src/groupByDate';
-import groupByProperty from './src/groupByProperty';
-import formatDate from './src/formatDate';
+import generateHistogram from '@/generateHistogram';
+import groupByDate from '@/groupByDate';
+import groupByProperty from '@/groupByProperty';
+import formatDate from '@/formatDate';
 
 export {
   generateHistogram,

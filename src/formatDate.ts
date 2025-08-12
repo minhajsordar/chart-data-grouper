@@ -1,4 +1,4 @@
-export const VALID_TOKENS = ['YYYY', 'MMMM', 'MMM', 'MM', 'DD', 'HH', 'mm', 'ss', 'SSS', 'W', 'WW'];
+export const VALID_TOKENS = ['YYYY', 'MMMM', 'MMM', 'MM', 'DD', 'HH', 'mm', 'ss', 'SSS', 'W', 'WW', 'A', 'a'];
 
 export function isValidFormat(format: string): boolean {
   return format.split(/[^A-Za-z]+/).every(token =>
@@ -26,20 +26,26 @@ export default function formatDate(date: Date | string | number, format: string)
     return weekNo;
   }
 
+  const hours = d.getHours();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const hours12 = hours % 12 || 12;
+
   const map: Record<string, string> = {
     YYYY: d.getFullYear().toString(),
     MM: pad(d.getMonth() + 1),
     MMM: monthNamesShort[d.getMonth()],
     MMMM: monthNamesLong[d.getMonth()],
     DD: pad(d.getDate()),
-    HH: pad(d.getHours()),
+    HH: pad(hours12), // Note: Changed to 12-hour format to match AM/PM
     mm: pad(d.getMinutes()),
     ss: pad(d.getSeconds()),
     SSS: pad(d.getMilliseconds(), 3),
     W: getWeekNumber(d).toString(),
     WW: pad(getWeekNumber(d)),
+    A: ampm,
+    a: ampm.toLowerCase(),
   };
 
   // Sort longest tokens first to avoid partial replacements
-  return format.replace(/YYYY|MMMM|MMM|MM|DD|HH|mm|ss|SSS|WW|W/g, token => map[token]);
+  return format.replace(/YYYY|MMMM|MMM|MM|DD|HH|mm|ss|SSS|WW|W|A|a/g, token => map[token]);
 }
